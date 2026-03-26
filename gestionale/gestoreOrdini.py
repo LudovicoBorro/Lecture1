@@ -7,9 +7,11 @@ Scrivere un software gestionale che abbia le seguenti funzionalità:
 """
 
 from collections import deque, defaultdict
+import random
 
-from gestionale.core.clienti import ClienteRecord
-from gestionale.core.prodotti import ProdottoRecord
+from dao.dao import DAO
+from gestionale.core.cliente import ClienteRecord
+from gestionale.core.prodotto import ProdottoRecord
 from gestionale.vendite.ordini import Ordine, RigaOrdine
 from collections import Counter
 
@@ -20,6 +22,22 @@ class GestoreOrdini:
         self._ordini_processati = []
         self._statistiche_prodotti = Counter()
         self._ordini_per_categoria = defaultdict(list)
+        self._dao = DAO()
+        self._allP = []
+        self._allC = []
+        self._fill_data()
+
+    def _fill_data(self):
+        # Leggo prodotti e clienti dal db, e poi creo degli ordini randomici per testare la mia app.
+        self._allP.extend(self._dao.getAllProdotti())
+        self._allC.extend(self._dao.getAllClienti())
+
+        for i in range(10):
+            indexP = random.randint(0, len(self._allP)-1)
+            indexC = random.randint(0, len(self._allC)-1)
+            ordine = Ordine([RigaOrdine(self._allP[indexP], random.randint(1, 5))],
+                            self._allC[indexC])
+            self.add_ordine(ordine)
 
     def add_ordine(self, ordine: Ordine):
         """Aggiunge un nuovo ordine agli elementi da gestire"""
@@ -28,7 +46,19 @@ class GestoreOrdini:
         print(f"Ordine ancora da evadere: {len(self._ordini_da_processare)}")
 
     def crea_ordine(self, nomeP, prezzoP, quantitaP, nomeC, mailC, categoriaC):
-        return Ordine([RigaOrdine(ProdottoRecord(nomeP, prezzoP), quantitaP)], ClienteRecord(nomeC, mailC, categoriaC))
+
+        prod = ProdottoRecord(nomeP, prezzoP)
+        cliente = ClienteRecord(nomeC, mailC, categoriaC)
+
+        self._updateDB(prod, cliente)
+        return Ordine([RigaOrdine(prod, quantitaP)], cliente)
+
+    def _updateDB(self, prod, cliente):
+        if not self._dao.hasProdotto(prod):
+            self._dao.addProdotto(prod)
+
+        if not self._dao.hasCliente(cliente):
+            self._dao.addCliente(cliente)
 
     def processa_prossimo_ordine(self):
         """Questo metodo legge il prossimo ordine in coda e lo gestisce"""
@@ -39,7 +69,7 @@ class GestoreOrdini:
         # Assicuriamoci che un ordine da processare esista
         if not self._ordini_da_processare:
             print(f"Non ci sono ordini in coda.")
-            return False
+            return False, Ordine([], ClienteRecord("","",""))
 
         # Se esiste, gestiamo il primo in coda
         ordine = self._ordini_da_processare.popleft() # Logica FIFO
@@ -60,17 +90,22 @@ class GestoreOrdini:
         self._ordini_processati.append(ordine)
 
         print(f"Ordine correttamente processato.")
-        return True
+        return True, ordine
 
     def processa_tutti_ordini(self):
         """Processa tutti gli ordini presenti in coda."""
         print("\n" + "=" * 60)
         print(f"Processando {len(self._ordini_da_processare)} ordini")
+
+        ordini = []
+
         while self._ordini_da_processare:
-            self.processa_prossimo_ordine()
+            _, ordine = self.processa_prossimo_ordine()
+            ordini.append(ordine)
         print("\n" + "-" * 60)
         print("\n" + "-" * 60)
         print("Tutti gli ordini sono stati processati.")
+        return ordini
 
     def get_statistiche_prodotti(self, top_n: int = 5):
         """Questo metodo restituisce info sui prodotti più venduti"""
@@ -102,6 +137,14 @@ class GestoreOrdini:
         print(f"Fatturato per categoria:")
         for cat, fatturato in self.get_distribuzione_categorie():
             print(f"{cat}: {fatturato}")
+
+    def get_riepilogo(self):
+        """Restituisce una stringa con le info di massimo"""
+        sommario = ""
+        sommario += "\n" + "="*60
+        sommario += f"\n Ordini correttamente gestiti: {len(self._ordini_processati)}"
+        sommario += f"\n Ordini in coda: {len(self._ordini_da_processare)}"
+        return sommario
 
 def test_modulo():
     sistema = GestoreOrdini()
