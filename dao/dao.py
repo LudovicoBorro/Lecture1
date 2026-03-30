@@ -7,7 +7,8 @@ from gestionale.core.prodotto import ProdottoRecord
 
 class DAO:
 
-    def getAllProdotti(self):
+    @staticmethod
+    def getAllProdotti():
          #   cnx = mysql.connector.connect(
          #      user = "root",
          #      password = "ricercaopforreal!347?",
@@ -28,7 +29,8 @@ class DAO:
         cnx.close()
         return res
 
-    def getAllClienti(self):
+    @staticmethod
+    def getAllClienti():
         #   cnx = mysql.connector.connect(
         #      user = "root",
         #      password = "ricercaopforreal!347?",
@@ -49,7 +51,8 @@ class DAO:
         cnx.close()
         return res
 
-    def addProdotto(self, prodotto):
+    @staticmethod
+    def addProdotto(prodotto):
         #   cnx = mysql.connector.connect(
         #      user = "root",
         #      password = "ricercaopforreal!347?",
@@ -68,7 +71,8 @@ class DAO:
         cnx.close()
         return
 
-    def addCliente(self, cliente):
+    @staticmethod
+    def addCliente(cliente):
         #   cnx = mysql.connector.connect(
         #      user = "root",
         #      password = "ricercaopforreal!347?",
@@ -87,7 +91,8 @@ class DAO:
         cnx.close()
         return
 
-    def hasProdotto(self, prodotto):
+    @staticmethod
+    def hasProdotto(prodotto):
         #   cnx = mysql.connector.connect(
         #      user = "root",
         #      password = "ricercaopforreal!347?",
@@ -105,7 +110,8 @@ class DAO:
         cnx.close()
         return len(row) > 0
 
-    def hasCliente(self, cliente):
+    @staticmethod
+    def hasCliente(cliente):
         #   cnx = mysql.connector.connect(
         #      user = "root",
         #      password = "ricercaopforreal!347?",
